@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react"; 
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUserStore } from "@/Zustand/store";
@@ -23,33 +23,68 @@ const SignIn = () => {
   const [isDeliveryPartner, setIsDeliveryPartner] = useState(false);
   const [error,setError]=useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setPending(true)
-    const updatedForm = {
-      ...form,
-      role: isDeliveryPartner ? "delivery" : "customer"
-  };
-  console.log(updatedForm)
-    const res=await signIn('credentials',{redirect:false,...updatedForm})
-    console.log("Response:", res);
-    if(res?.data){
-      console.log('ok ann ')
-        toast.success("login successfull")
-        const userRes=await axiosConfig.get('/api/auth/session')
-        console.log("User Data:", userRes)
-        if (userRes?.data?.user) {
-          login(userRes.data.user); 
-        }
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setPending(true)
+//     const updatedForm = {
+//       ...form,
+//       role: isDeliveryPartner ? "delivery" : "customer"
+//   };
+//   console.log(updatedForm)
+//     const res=await signIn('credentials',{redirect:false,...updatedForm})
+//     console.log("Response:", res);
+//     if(res?.data){
+//       console.log(res.data)
+//         toast.success("login successfull")
+//         const userRes=await axiosConfig.get('/api/auth/session')
+//         console.log("User Data:", userRes)
+//         if (userRes?.data?.user) {
+//           login(userRes.data.user); 
+//         }
 
-        router.push("/");
-    }else if(res?.status===401){
-        toast.error('Invalid credentials');
-        setPending(false)
-    }else{
-      toast.error('Something went wrong');
+//         router.push("/");
+//     }else if(res?.status===401){
+//         toast.error('Invalid credentials');
+//         setPending(false)
+//     }else{
+//       toast.error('Something went wrong');
+//     }
+// }
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setPending(true);
+
+  const updatedForm = {
+    ...form,
+    role: isDeliveryPartner ? "delivery" : "customer",
+  };
+
+  console.log(updatedForm);
+
+  const res = await signIn("credentials", { redirect: false, ...updatedForm });
+
+  console.log("Response:", res);
+
+  if (res?.ok) { 
+    toast.success("Login successful");
+
+    const userRes = await getSession();  
+    console.log("User Data:", userRes);
+
+    if (userRes?.user) {
+      login(userRes.user); 
     }
-}
+
+    router.push("/");
+  } else if (res?.status === 401) {
+    toast.error("Invalid credentials");
+    setPending(false);
+  } else {
+    toast.error("Something went wrong");
+    setPending(false);
+  }
+};
 
   return (
     <div className="flex flex-col text-center space-y-2 min-h-screen justify-center items-center">
