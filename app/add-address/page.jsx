@@ -8,6 +8,8 @@ import axiosConfig from "@/utils/axiosConfig";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { FaLocationCrosshairs } from "react-icons/fa6";
+import MapPicker from "@/components/MapPicker";
 
 
 
@@ -28,6 +30,41 @@ const AddAddress = () => {
     })
 
     const [errors, setErrors] = useState({});
+    const [location, setLocation] = useState("");
+    const [mapOpen, setMapOpen] = useState(false);
+
+    const handleSelectLocation = async (pos) => {
+        setLocation(`Lat: ${pos.lat}, Lng: ${pos.lng}`);
+        setMapOpen(false);
+    
+        try {
+            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY; 
+            const res = await axiosConfig.get(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.lat},${pos.lng}&key=${apiKey}`
+            );
+    
+            if (res.data.status === "OK" && res.data.results.length > 0) {
+                const addressComponents = res.data.results[0].address_components;
+    
+                const getComponent = (type) => addressComponents.find((c) => c.types.includes(type))?.long_name || "";
+    
+                setAddress({
+                    fullName: address.fullName, // Preserve entered name
+                    phoneNumber: address.phoneNumber, // Preserve entered phone
+                    zipCode: getComponent("postal_code"),
+                    street: getComponent("route") + " " + getComponent("street_number"),
+                    city: getComponent("locality"),
+                    state: getComponent("administrative_area_level_1"),
+                    country: getComponent("country"),
+                });
+            } else {
+                toast.error("Failed to fetch address.");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error fetching address.");
+        }
+    };
 
     const validateForm = () => {
         let newErrors = {};
@@ -88,6 +125,22 @@ const AddAddress = () => {
                         Add Shipping <span className="font-semibold text-orange-600">Address</span>
                     </p>
                     <div className="space-y-3 max-w-sm mt-10">
+                                <div>
+                                  <label className="text-base font-medium uppercase text-gray-600 block mb-2">
+                                    Set Delivery Location
+                                  </label>
+                                  <div className="relative w-full">
+                          <FaLocationCrosshairs className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" />
+                          <input
+                            type="text"
+                            value={location}
+                            readOnly
+                            onClick={() => setMapOpen(true)}
+                            className="w-full outline-none p-2.5 pl-10 text-gray-600 border cursor-pointer"
+                            placeholder="Click to select location"
+                          />
+                        </div>
+                                </div>
                         <input
                             className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
                             type="text"
@@ -165,6 +218,11 @@ const AddAddress = () => {
                     alt="my_location_image"
                 />
             </div>
+            <MapPicker
+        isOpen={mapOpen}
+        onClose={() => setMapOpen(false)}
+        onSelectLocation={handleSelectLocation}
+      />
             <Footer />
         </>
     );

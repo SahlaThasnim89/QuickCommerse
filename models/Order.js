@@ -20,10 +20,10 @@ const OrderSchema = new mongoose.Schema({
     zipCode: { type: String, required: true },
     country: { type: String, required: true },
   },
-  deliveryLocation: {
-    latitude: { type: Number, default: null },
-    longitude: { type: Number, default: null }
-  }
+  orderAmount:{
+    type:Number,
+    required:true
+  },
 }, { timestamps: true });
 
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

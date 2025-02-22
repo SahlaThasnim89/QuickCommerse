@@ -82,6 +82,7 @@ const Navbar = () => {
 }}
         >
             <MenuItem onClick={() => { routes.push('/customer'); handleClose(); }}>My Account</MenuItem>
+            <MenuItem onClick={() => { routes.push('/cart'); handleClose(); }}>My Cart</MenuItem>
             <MenuItem onClick={() => { handleSignOut(); handleClose(); }}>Logout</MenuItem>
           </Menu>
         )}

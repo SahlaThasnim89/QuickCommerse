@@ -18,7 +18,7 @@ export async function GET(request) {
             return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
         }
 
-        const addresses = await Address.find({ userEmail: email });
+        const addresses = await Address.findOne({ userEmail: email });
 
         return NextResponse.json({ success: true, addresses }, { status: 200 });
     } catch (error) {

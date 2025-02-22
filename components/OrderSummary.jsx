@@ -4,23 +4,23 @@ import { addressDummyData } from "@/assets/assets";
 import { useAppContext } from "@/context/AppContext";
 import axiosConfig from "@/utils/axiosConfig";
 import React, { useEffect, useState } from "react";
-import MapPicker from "@/components/MapPicker";
 import { useUserStore } from "@/Zustand/store";
-import { FaLocationCrosshairs } from "react-icons/fa6";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 
 
 
 const OrderSummary = () => {
+  const routes=useRouter()
   const user = useUserStore();
-  const { currency, router, getCartCount, getCartAmount } = useAppContext();
+  const { currency, router, getCartCount, getCartAmount,cartItems } = useAppContext();
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const [userAddresses, setUserAddresses] = useState([]);
 
-  const [location, setLocation] = useState("");
-  const [mapOpen, setMapOpen] = useState(false);
+
   const [error, setError] = useState("");
 
 
@@ -31,24 +31,14 @@ const OrderSummary = () => {
   console.log(user)
 
   const fetchUserAddresses = async () => {
-    console.log('hhuiuiu')
     if (!user || !user.email) return;
-    console.log(user,'yuiyi')
 
     try {
-      console.log('uouoiu')
       const response = await axiosConfig.get(`/api/address/get?email=${user.email}`);
-      console.log(response,'opop')
-      setUserAddresses(response.data||addressDummyData);
+      setUserAddresses(response?.data?.addresses?.address||addressDummyData);
     } catch (error) {
       console.error("Failed to fetch addresses", error);
     }
-  };
-
-
-  const handleSelectLocation = (pos) => {
-    setLocation(`Lat: ${pos.lat}, Lng: ${pos.lng}`);
-    setMapOpen(false);
   };
 
 
@@ -57,10 +47,50 @@ const OrderSummary = () => {
     setIsDropdownOpen(false);
   };
 
-  const createOrder = async () => {};
+
+  const createOrder = async () => {
+    console.log(cartItems,selectedAddress,user._id,getCartAmount() + Math.floor(getCartAmount() * 0.02))
+    
+    const cartArray = Array.isArray(cartItems) ? cartItems : Object.values(cartItems);
+
+    if (!selectedAddress) {
+      toast("Please select an address.");
+      return;
+    }
+  
+    if (cartItems.length === 0) {
+      toast("Your cart is empty.");
+      return;
+    }
+  
+    const orderData = {
+      customerId: user._id,  
+      product: cartArray.map(item => item.name).join(", "),
+      quantity: cartArray.reduce((total, item) => total + item.quantity, 0),
+      address: {
+        fullName: selectedAddress.fullName,
+        phoneNumber: selectedAddress.phoneNumber,
+        street: selectedAddress.street,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        zipCode: selectedAddress.zipCode,
+        country: selectedAddress.country,
+      },
+      orderAmount: getCartAmount() + Math.floor(getCartAmount() * 0.02), 
+    };
+  
+    try {
+      const response = await axiosConfig.post("/api/orders", orderData);
+      console.log("Order placed successfully:", response.data);
+  
+      routes.push("/order-placed");
+    } catch (error) {
+      console.error("Failed to place order", error);
+      setError("Failed to place order. Please try again.");
+    }
+  };
 
   useEffect(() => {
-    console.log('yuiyiuy')
     fetchUserAddresses();
   }, []);
 
@@ -82,7 +112,7 @@ const OrderSummary = () => {
             >
               <span>
                 {selectedAddress
-                  ? `${selectedAddress.fullName}, ${selectedAddress.area}, ${selectedAddress.city}, ${selectedAddress.state}`
+                  ? `${selectedAddress.fullName}, ${selectedAddress.phoneNumber}, ${selectedAddress.city},${selectedAddress.zipCode}, ${selectedAddress.state}`
                   : "Select Address"}
               </span>
               <svg
@@ -105,24 +135,14 @@ const OrderSummary = () => {
 
             {isDropdownOpen && (
               <ul className="absolute w-full bg-white border shadow-md mt-1 z-10 py-1.5">
-               {/* <li className="flex items-center gap-2 border p-2.5">
-  <FaLocationCrosshairs className="text-gray-600" />
-  <input
-    type="text"
-    value={location}
-    readOnly
-    onClick={() => setMapOpen(true)}
-    className="flex-grow outline-none text-gray-600 cursor-pointer"
-    placeholder="Click to select location"
-  />
-</li> */}
-                {userAddresses.map((address, index) => (
+  
+                {userAddresses?.map((address, index) => (
                   <li
                     key={index}
                     className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer"
                     onClick={() => handleAddressSelect(address)}
                   >
-                    {address.fullName}, {address.area}, {address.city},{" "}
+                    {address.fullName}, {address.phoneNumber}, {address.city},{" "}
                     {address.state}
                   </li>
                 ))}
@@ -137,22 +157,7 @@ const OrderSummary = () => {
           </div>
         </div>
 
-        <div>
-          <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-            Set Delivery Location
-          </label>
-          <div className="relative w-full">
-  <FaLocationCrosshairs className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" />
-  <input
-    type="text"
-    value={location}
-    readOnly
-    onClick={() => setMapOpen(true)}
-    className="w-full outline-none p-2.5 pl-10 text-gray-600 border cursor-pointer"
-    placeholder="Click to select location"
-  />
-</div>
-        </div>
+
 
         <hr className="border-gray-500/30 my-5" />
 
@@ -191,11 +196,6 @@ const OrderSummary = () => {
       >
         Place Order
       </button>
-      <MapPicker
-        isOpen={mapOpen}
-        onClose={() => setMapOpen(false)}
-        onSelectLocation={handleSelectLocation}
-      />
     </div>
   );
 };
