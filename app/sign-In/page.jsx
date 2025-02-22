@@ -23,33 +23,7 @@ const SignIn = () => {
   const [isDeliveryPartner, setIsDeliveryPartner] = useState(false);
   const [error,setError]=useState('')
 
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setPending(true)
-//     const updatedForm = {
-//       ...form,
-//       role: isDeliveryPartner ? "delivery" : "customer"
-//   };
-//   console.log(updatedForm)
-//     const res=await signIn('credentials',{redirect:false,...updatedForm})
-//     console.log("Response:", res);
-//     if(res?.data){
-//       console.log(res.data)
-//         toast.success("login successfull")
-//         const userRes=await axiosConfig.get('/api/auth/session')
-//         console.log("User Data:", userRes)
-//         if (userRes?.data?.user) {
-//           login(userRes.data.user); 
-//         }
 
-//         router.push("/");
-//     }else if(res?.status===401){
-//         toast.error('Invalid credentials');
-//         setPending(false)
-//     }else{
-//       toast.error('Something went wrong');
-//     }
-// }
 
 const handleSubmit = async (e) => {
   e.preventDefault();
