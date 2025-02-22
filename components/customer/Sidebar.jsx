@@ -10,6 +10,7 @@ const SideBar = () => {
         { name: 'My Account', path: '/customer', icon: assets.add_icon },
         { name: 'Product List', path: '/customer/product-list', icon: assets.product_list_icon },
         { name: 'Orders', path: '/customer/orders', icon: assets.order_icon },
+        { name: 'Order History', path: '/customer/orderHistory', icon: assets.order_icon },
     ];
 
     return (
